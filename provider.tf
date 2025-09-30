@@ -5,7 +5,7 @@ provider "aws" {
 terraform {
   backend "s3" {
     bucket         = "meu-terraform-states-soat"
-    key            = "eks/terraform.tfstate"
+    key            = "env:/dev/eks/terraform.tfstate"
     region         = "us-east-1"
     dynamodb_table = "terraform-locks-soat"
   }
