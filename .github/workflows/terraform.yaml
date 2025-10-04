@@ -25,6 +25,8 @@ on:
     secrets:
       aws-assume-role-arn:
         required: true
+      DB_PASSWORD:
+        required: true
 
 jobs:
   terraform:
@@ -80,3 +82,23 @@ jobs:
         run: |
           terraform workspace select ${{ inputs.environment }} || terraform workspace new ${{ inputs.environment }}
           terraform apply "${{ inputs.environment }}.plan"
+
+      - name: Configure kubectl
+        run: |
+          aws eks update-kubeconfig \
+            --region ${{ inputs.aws-region }} \
+            --name lanchonete-app-dev
+
+      - name: Deploy Metrics Server
+        run: |
+          kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+      
+      - name: Apply Kubernetes Secrets
+        run: |
+          kubectl create secret generic lanchonete-secret \
+            --from-literal=spring.datasource.password=${{ secrets.DB_PASSWORD }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Apply k8s
+        run: |
+          kubectl apply -f k8s
