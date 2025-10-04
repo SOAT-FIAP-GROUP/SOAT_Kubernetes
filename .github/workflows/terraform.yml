@@ -80,3 +80,53 @@ jobs:
         run: |
           terraform workspace select ${{ inputs.environment }} || terraform workspace new ${{ inputs.environment }}
           terraform apply "${{ inputs.environment }}.plan"
+
+      - name: Get Terraform outputs (RDS)
+        id: tf_outputs
+        run: |
+          SPRING_DATASOURCE_URL=$(terraform output -raw db_instance_endpoint)
+          echo "SPRING_DATASOURCE_URL=$SPRING_DATASOURCE_URL" >> $GITHUB_OUTPUT
+
+      - name: Get SSM parameters
+        id: ssm
+        run: |
+          SPRING_ACTIVE_PROFILE=$(aws ssm get-parameter --name "/SPRING_ACTIVE_PROFILE" --with-decryption --query "Parameter.Value" --output text)
+          SPRING_DATASOURCE_NAME=$(aws ssm get-parameter --name "/SPRING_DATASOURCE_NAME" --with-decryption --query "Parameter.Value" --output text)
+          SPRING_DATASOURCE_USERNAME=$(aws ssm get-parameter --name "/SPRING_DATASOURCE_USERNAME" --with-decryption --query "Parameter.Value" --output text)
+          echo "SPRING_ACTIVE_PROFILE=$SPRING_ACTIVE_PROFILE" >> $GITHUB_OUTPUT
+          echo "SPRING_DATASOURCE_NAME=$SPRING_DATASOURCE_NAME" >> $GITHUB_OUTPUT
+          echo "SPRING_DATASOURCE_USERNAME=$SPRING_DATASOURCE_USERNAME" >> $GITHUB_OUTPUT
+
+      - name: Get SPRING_DATASOURCE_PASSWORD secret
+        id: secrets
+        run: |
+          SPRING_DATASOURCE_PASSWORD=$(aws secretsmanager get-secret-value --secret-id "/SPRING_DATASOURCE_PASSWORD" --query "SecretString" --output text)
+          echo "SPRING_DATASOURCE_PASSWORD=$SPRING_DATASOURCE_PASSWORD" >> $GITHUB_OUTPUT
+
+      - name: Render ConfigMap
+        run: |
+          export SPRING_DATASOURCE_URL="${{ steps.tf_outputs.outputs.SPRING_DATASOURCE_URL }}"
+          export SPRING_DATASOURCE_USERNAME="${{ steps.ssm.outputs.SPRING_DATASOURCE_USERNAME }}"
+          export SPRING_DATASOURCE_NAME="${{ steps.ssm.outputs.SPRING_DATASOURCE_NAME }}"
+          export SPRING_ACTIVE_PROFILE="${{ steps.ssm.outputs.SPRING_ACTIVE_PROFILE }}"
+          envsubst < k8s/configmap.yaml > k8s/configmap_rendered.yaml
+
+      - name: Configure kubectl
+        run: |
+          aws eks update-kubeconfig \
+            --region ${{ inputs.aws-region }} \
+            --name lanchonete-app-dev
+
+      - name: Deploy Metrics Server
+        run: |
+          kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+      
+      - name: Apply Kubernetes Secrets
+        run: |
+          kubectl create secret generic lanchonete-secret \
+            --from-literal=spring.datasource.password=${{ steps.secrets.outputs.SPRING_DATASOURCE_PASSWORD }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Apply k8s
+        run: |
+          kubectl apply -f k8s

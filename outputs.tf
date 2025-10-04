@@ -7,3 +7,7 @@ output "cluster_name" {
   description = "Kubernetes Cluster Name"
   value       = module.eks.cluster_name
 }
+
+output "db_instance_endpoint" {
+  value = data.terraform_remote_state.rds.outputs.db_instance_endpoint
+}
