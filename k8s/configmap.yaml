@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: lanchonete-config
 data:
-  spring.datasource.url: jdbc:mariadb://mariadb:3306/lanchonetedb?createDatabaseIfNotExist=true
-  spring.datasource.db-name: lanchonetedb
-  spring.datasource.username: root
-  spring.profiles.active: develop
+  spring.datasource.url: "jdbc:mariadb://${SPRING_DATASOURCE_URL}/lanchonetedb?createDatabaseIfNotExist=true"
+  spring.datasource.db-name: ${SPRING_DATASOURCE_NAME}
+  spring.datasource.username: ${SPRING_DATASOURCE_USERNAME}
+  spring.profiles.active: ${SPRING_ACTIVE_PROFILE}
