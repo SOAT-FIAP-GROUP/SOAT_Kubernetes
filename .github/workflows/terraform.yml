@@ -120,7 +120,7 @@ jobs:
       - name: Apply Kubernetes Secrets
         run: |
           kubectl create secret generic lanchonete-secret \
-            --from-literal=spring.datasource.password=${{ steps.secrets.outputs.SPRING_DATASOURCE_PASSWORD }} \
+            --from-literal=spring.datasource.password=${{ steps.ssm.outputs.SPRING_DATASOURCE_PASSWORD }} \
             --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Apply k8s
