@@ -82,12 +82,14 @@ jobs:
           terraform apply "${{ inputs.environment }}.plan"
 
       - name: Get Terraform outputs (RDS)
+        if: ${{ inputs.destroy != 'true' }}
         id: tf_outputs
         run: |
           SPRING_DATASOURCE_URL=$(terraform output -raw db_instance_endpoint)
           echo "SPRING_DATASOURCE_URL=$SPRING_DATASOURCE_URL" >> $GITHUB_OUTPUT
 
       - name: Get SSM parameters
+        if: ${{ inputs.destroy != 'true' }}
         id: ssm
         run: |
           SPRING_ACTIVE_PROFILE=$(aws ssm get-parameter --name "/SPRING_ACTIVE_PROFILE" --with-decryption --query "Parameter.Value" --output text)
@@ -100,6 +102,7 @@ jobs:
           echo "SPRING_DATASOURCE_PASSWORD=$SPRING_DATASOURCE_PASSWORD" >> $GITHUB_OUTPUT
 
       - name: Render ConfigMap
+        if: ${{ inputs.destroy != 'true' }}
         run: |
           export SPRING_DATASOURCE_URL="${{ steps.tf_outputs.outputs.SPRING_DATASOURCE_URL }}"
           export SPRING_DATASOURCE_USERNAME="${{ steps.ssm.outputs.SPRING_DATASOURCE_USERNAME }}"
@@ -108,21 +111,25 @@ jobs:
           envsubst < k8s/configmap.yaml > k8s/configmap_rendered.yaml
 
       - name: Configure kubectl
+        if: ${{ inputs.destroy != 'true' }}
         run: |
           aws eks update-kubeconfig \
             --region ${{ inputs.aws-region }} \
             --name lanchonete-app-dev
 
       - name: Deploy Metrics Server
+        if: ${{ inputs.destroy != 'true' }}
         run: |
           kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
       
       - name: Apply Kubernetes Secrets
+        if: ${{ inputs.destroy != 'true' }}
         run: |
           kubectl create secret generic lanchonete-secret \
             --from-literal=spring.datasource.password=${{ steps.ssm.outputs.SPRING_DATASOURCE_PASSWORD }} \
             --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Apply k8s
+        if: ${{ inputs.destroy != 'true' }}
         run: |
           kubectl apply -f k8s
