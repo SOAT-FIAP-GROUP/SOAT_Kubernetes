@@ -9,7 +9,7 @@ variable "active_profile" {
 }
 
 variable "bucket" {
-  default = "meu-terraform-states-soat"  
+  default = "meu-terraform-states-soat-948512815388"  
 }
 
 variable "local_name" {
