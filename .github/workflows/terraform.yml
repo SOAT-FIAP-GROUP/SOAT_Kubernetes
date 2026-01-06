@@ -85,7 +85,7 @@ jobs:
         if: ${{ inputs.destroy != 'true' }}
         id: tf_outputs
         run: |
-          SPRING_DATASOURCE_URL=$(terraform output -raw db_instance_endpoint)
+          SPRING_DATASOURCE_URL=$(terraform output -raw db_instance_endpoint_pedido)
           echo "SPRING_DATASOURCE_URL=$SPRING_DATASOURCE_URL" >> $GITHUB_OUTPUT
 
       - name: Get SSM parameters
