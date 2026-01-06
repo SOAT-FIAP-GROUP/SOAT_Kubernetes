@@ -88,13 +88,6 @@ jobs:
           SPRING_DATASOURCE_URL=$(terraform output -raw db_instance_endpoint_pedido)
           echo "SPRING_DATASOURCE_URL=$SPRING_DATASOURCE_URL" >> $GITHUB_OUTPUT
 
-      - name: Debug AWS Identity & SSM
-        run: |
-          echo "AWS_REGION=$AWS_REGION"
-          aws sts get-caller-identity
-          aws ssm get-parameter --name SPRING_ACTIVE_PROFILE --region us-east-1
-
-
       - name: Get SSM parameters
         if: ${{ inputs.destroy != 'true' }}
         id: ssm
