@@ -80,11 +80,10 @@ module "eks" {
       # Starting on 1.30, AL2023 is the default AMI type for EKS managed node groups
       ami_type = local.eks_nodes_ami_type
 
-      min_size               = 2
-      max_size               = 3
+      min_size               = 1
+      max_size               = 2
       desired_size           = 1
       capacity_type          = "SPOT"
-      # capacity_type          = "ON_DEMAND"
       vpc_security_group_ids = [data.terraform_remote_state.rds.outputs.sg_eks_id]
       launch_template_name = "${local.name}-eks-mng-nodes-template"
       labels               = local.tags
