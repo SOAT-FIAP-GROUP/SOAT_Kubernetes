@@ -83,7 +83,8 @@ module "eks" {
       min_size               = 1
       max_size               = 2
       desired_size           = 1
-      capacity_type          = "SPOT"
+      # capacity_type          = "SPOT"
+      capacity_type          = "ON_DEMAND"
       vpc_security_group_ids = [data.terraform_remote_state.rds.outputs.sg_eks_id]
       launch_template_name = "${local.name}-eks-mng-nodes-template"
       labels               = local.tags
