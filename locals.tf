@@ -8,8 +8,8 @@ locals {
   vpc_cidr           = var.vpc_cidr_block
   azs                = slice(data.aws_availability_zones.available.names, 0, var.vpc_subnets_count)
   kubernetes_version = "1.31"
-  # instance_types     = ["t3.small", "t3a.small"] #t3.micro don't work
-  instance_types     = ["t3.medium"]
+  instance_types     = ["t3.small", "t3a.small"] #t3.micro don't work
+  # instance_types     = ["t3.medium"]
   eks_nodes_ami_type = "AL2023_x86_64_STANDARD"
   container_port     = var.container_port
   docker_image       = var.docker_image
